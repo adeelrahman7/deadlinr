@@ -4,6 +4,8 @@ import pool from '../db/pool.js';
 import requireAuth from '../middleware/requireAuth.js';
 import { sendValidationError, parseId } from '../utils/validate.js';
 
+console.log('>>> courses.js loaded from routes folder');
+
 const router = Router();
 router.use(requireAuth);
 
@@ -29,6 +31,22 @@ router.get('/', async (req, res) => {
     [req.user.id]
   );
   res.json({ courses: result.rows });
+});
+
+// GET /api/courses/:id
+router.get('/:id', async (req, res) => {
+  const id = parseId(req.params.id);
+  if (!id) return res.status(404).json({ error: 'Course not found' });
+
+  const result = await pool.query(
+    'SELECT id, name, color FROM courses WHERE id = $1 AND user_id = $2',
+    [id, req.user.id]
+  );
+
+  if (result.rowCount === 0) {
+    return res.status(404).json({ error: 'Course not found' });
+  }
+  res.json({ course: result.rows[0] });
 });
 
 // POST /api/courses
